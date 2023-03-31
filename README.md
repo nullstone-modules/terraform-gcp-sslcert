@@ -18,6 +18,8 @@ module "cert" {
   enabled   = true
   cert_name = "example-acme-com"
 
+  // Produces a certificate with one subdomain `example.acme.com`
+  // This certificate is authorized by adding DNS records to the acme.com DNS Zone
   subdomains = {
     "example" : google_dns_managed_zone.acme-com.name
   }
