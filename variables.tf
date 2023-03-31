@@ -13,12 +13,12 @@ The name must be 1-64 characters long, and match the regular expression [a-zA-Z]
 EOF
 }
 
-variable "domains" {
+variable "subdomains" {
   type = map(string)
 
   description = <<EOF
-A list of domains represented as a map to register on the SSL certificate.
-In each key/value pair, the key refers to the DNS name and the value refers to the GCP unique zone name.
-Use "." for the key to use only the domain name from the zone_name.
+A list of subdomains represented as a map to register on the SSL certificate.
+In each key/value pair, the key refers to the DNS name of the subdomain and the value refers to the GCP unique zone name of the domain.
+If you want to use the dns_name from the domain zone, use `.` for the map key.
 EOF
 }
