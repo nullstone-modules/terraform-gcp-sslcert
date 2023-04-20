@@ -5,16 +5,15 @@ data "google_dns_managed_zone" "domains" {
 }
 
 locals {
-  domain_names    = { for key, _ in var.subdomains : key => data.google_dns_managed_zone.domains[key].dns_name }
-  subdomain_names = { for key, _ in var.subdomains : key => key != "." ? "${key}.${local.domain_names[key]}" : local.domain_names[key] }
+  domain_names = {for key, _ in var.subdomains : key => trimsuffix(data.google_dns_managed_zone.domains[key].dns_name, ".")}
 }
 
 resource "google_certificate_manager_dns_authorization" "this" {
   for_each = var.subdomains
 
-  name        = replace(local.subdomain_names, ".", "-")
+  name        = replace(each.key, ".", "-")
   description = "Managed by Nullstone"
-  domain      = local.subdomain_names[each.key]
+  domain      = local.domain_names[each.key]
 }
 
 locals {
@@ -39,7 +38,7 @@ resource "google_certificate_manager_certificate" "this" {
   scope       = "EDGE_CACHE"
 
   managed {
-    domains            = google_certificate_manager_dns_authorization.this.*.domain
-    dns_authorizations = google_certificate_manager_dns_authorization.this.*.id
+    domains            = [ for da in google_certificate_manager_dns_authorization.this : da.domain ]
+    dns_authorizations = [ for da in google_certificate_manager_dns_authorization.this : da.id ]
   }
 }
