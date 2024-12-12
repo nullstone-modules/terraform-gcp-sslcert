@@ -1,27 +1,28 @@
 data "google_dns_managed_zone" "domains" {
-  for_each = var.subdomains
+  for_each = local.subdomains
 
   name = each.value
 }
 
 locals {
-  domain_names = {for key, _ in var.subdomains : key => trimsuffix(data.google_dns_managed_zone.domains[key].dns_name, ".")}
+  domain_names = { for key, _ in local.subdomains : key => trimsuffix(data.google_dns_managed_zone.domains[key].dns_name, ".") }
 }
 
 resource "google_certificate_manager_dns_authorization" "this" {
-  for_each = var.subdomains
+  for_each = local.subdomains
 
   name        = replace(each.key, ".", "-")
-  description = "Managed by Nullstone"
+  labels      = var.labels
+  description = "${each.key}: Created by Nullstone"
   domain      = local.domain_names[each.key]
 }
 
 locals {
-  auth_records = { for key, _ in var.subdomains : key => google_certificate_manager_dns_authorization.this[key].dns_resource_record.0 }
+  auth_records = { for key, _ in local.subdomains : key => google_certificate_manager_dns_authorization.this[key].dns_resource_record.0 }
 }
 
 resource "google_dns_record_set" "authorization_records" {
-  for_each = var.subdomains
+  for_each = local.subdomains
 
   managed_zone = each.value
   name         = local.auth_records[each.key].name
@@ -33,12 +34,28 @@ resource "google_dns_record_set" "authorization_records" {
 resource "google_certificate_manager_certificate" "this" {
   depends_on = [google_dns_record_set.authorization_records]
 
-  name        = var.cert_name
-  description = "Managed by Nullstone"
-  scope       = "EDGE_CACHE"
+  name        = var.name
+  labels      = var.labels
+  description = "Created by Nullstone"
+  scope       = var.scope
 
   managed {
-    domains            = [ for da in google_certificate_manager_dns_authorization.this : da.domain ]
-    dns_authorizations = [ for da in google_certificate_manager_dns_authorization.this : da.id ]
+    domains            = [for da in google_certificate_manager_dns_authorization.this : da.domain]
+    dns_authorizations = [for da in google_certificate_manager_dns_authorization.this : da.id]
   }
+}
+
+resource "google_certificate_manager_certificate_map" "this" {
+  name        = var.name
+  labels      = var.labels
+  description = "${var.name}: Created by Nullstone"
+}
+
+resource "google_certificate_manager_certificate_map_entry" "this" {
+  name         = var.name
+  labels       = var.labels
+  description  = "${var.name}: Created by Nullstone"
+  map          = google_certificate_manager_certificate_map.this.name
+  certificates = [google_certificate_manager_certificate.this.id]
+  matcher      = "PRIMARY"
 }
