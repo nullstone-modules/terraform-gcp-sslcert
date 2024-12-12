@@ -37,6 +37,7 @@ resource "google_dns_record_set" "authorization_records" {
 
 resource "google_certificate_manager_certificate" "this" {
   depends_on = [google_dns_record_set.authorization_records]
+  count      = var.enabled ? 1 : 0
 
   name        = var.name
   labels      = var.labels
@@ -50,16 +51,20 @@ resource "google_certificate_manager_certificate" "this" {
 }
 
 resource "google_certificate_manager_certificate_map" "this" {
+  count = var.enabled ? 1 : 0
+
   name        = var.name
   labels      = var.labels
   description = "${var.name}: Created by Nullstone"
 }
 
 resource "google_certificate_manager_certificate_map_entry" "this" {
+  count = var.enabled ? 1 : 0
+
   name         = var.name
   labels       = var.labels
   description  = "${var.name}: Created by Nullstone"
-  map          = google_certificate_manager_certificate_map.this.name
-  certificates = [google_certificate_manager_certificate.this.id]
+  map          = google_certificate_manager_certificate_map.this[count.index].name
+  certificates = [google_certificate_manager_certificate.this[count.index].id]
   matcher      = "PRIMARY"
 }
