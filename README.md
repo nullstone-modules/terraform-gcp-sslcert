@@ -15,13 +15,14 @@ resource "google_dns_managed_zone" "acme-com" {
 module "cert" {
   source = "nullstone-modules/sslcert/gcp"
 
-  enabled   = true
-  cert_name = "example-acme-com"
+  enabled = true
+  name    = "example-acme-com"
+  scope   = ""
 
   // Produces a certificate with one subdomain `example.acme.com`
   // This certificate is authorized by adding DNS records to the acme.com DNS Zone
   subdomains = {
-    "example" : google_dns_managed_zone.acme-com.name
+    "example.acme.com" = google_dns_managed_zone.acme-com.name
   }
 }
 ```
