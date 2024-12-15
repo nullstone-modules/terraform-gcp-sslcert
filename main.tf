@@ -17,6 +17,8 @@ resource "google_certificate_manager_dns_authorization" "this" {
   labels      = var.labels
   description = "${each.key}: Created by Nullstone"
   domain      = local.domain_names[each.key]
+
+  depends_on = [google_project_service.cert-manager]
 }
 
 locals {
@@ -54,6 +56,8 @@ resource "google_certificate_manager_certificate_map" "this" {
   name        = var.name
   labels      = var.labels
   description = "${var.name}: Created by Nullstone"
+
+  depends_on = [google_project_service.cert-manager]
 }
 
 resource "google_certificate_manager_certificate_map_entry" "this" {
