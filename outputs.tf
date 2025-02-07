@@ -17,3 +17,8 @@ output "certificate_map_id" {
   value       = try(google_certificate_manager_certificate_map.this[0].id, "")
   description = "The ID of the certificate map in GCP Certificate Manager. (Format: projects/{{project}}/locations/global/certificateMaps/{{name}})"
 }
+
+output "certificate_domains" {
+  value       = try(google_certificate_manager_certificate.this[0].san_dnsnames, [])
+  description = "A list of domains issued on the certificate."
+}
